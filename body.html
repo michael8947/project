@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>עולם בלי מילים - משחק שפת גוף</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* סגנון CommQuest */
+    body {
+      font-family: 'Rubik', sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      direction: rtl;
+      text-align: right;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stage-header {
+      text-align: center;
+      background: linear-gradient(135deg, #8e44ad 0%, #673ab7 100%);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      font-size: 22px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .xp-counter {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: linear-gradient(135deg, #FFC107 0%, #FF9800 100%);
+      padding: 5px 10px;
+      border-radius: 20px;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background-color: #e0e0e0;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .progress {
+      height: 100%;
+      background: linear-gradient(90deg, #8e44ad 0%, #9b59b6 100%);
+      border-radius: 10px;
+      width: 0%;
+      transition: width 0.5s;
+    }
+    .game-area {
+      padding: 20px;
+      background-color: #f8faff;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: inset 0 1px 5px rgba(0,0,0,0.05);
+      min-height: 300px;
+      position: relative;
+    }
+    .scenario {
+      margin-bottom: 30px;
+      display: none;
+      animation: fadeIn 0.5s;
+    }
+    .scenario.active {
+      display: block;
+    }
+    .scenario-header {
+      font-size: 22px;
+      font-weight: bold;
+      color: #8e44ad;
+      margin-bottom: 15px;
+    }
+    .scenario-description {
+      background-color: #f0e6f6;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 18px;
+      border-right: 4px solid #9b59b6;
+    }
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .option {
+      cursor: pointer;
+      padding: 15px;
+      background-color: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    .option:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .option.selected {
+      border-color: #9b59b6;
+      background-color: #f9f0ff;
+    }
+    .option.correct {
+      background-color: #d4f7d4;
+      border-color: #4CAF50;
+    }
+    .option.incorrect {
+      background-color: #ffe0e0;
+      border-color: #F44336;
+    }
+    .explanation {
+      display: none;
+      padding: 15px;
+      background-color: #f0f0ff;
+      border-radius: 8px;
+      margin-top: 20px;
+      border-right: 4px solid #9b59b6;
+      animation: fadeIn 0.5s;
+    }
+    .explanation-header {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #8e44ad;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #9b59b6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #8e44ad;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .game-over {
+      display: none;
+      text-align: center;
+      padding: 30px;
+      background-color: #dff7ff;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .game-over h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    .score-info {
+      font-size: 18px;
+      margin: 15px 0;
+    }
+    .restart-btn {
+      padding: 12px 25px;
+      font-size: 18px;
+      background-color: #9b59b6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    /* כפתור לעבור למשחק הבא - סנטימטר מתחת לכפתור "שחק שוב" */
+    .next-game-btn {
+      padding: 12px 25px;
+      font-size: 18px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: block;
+      margin: 1cm auto 0 auto;
+    }
+    .next-game-btn:hover {
+      background-color: #45a049;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .option-indicator {
+      display: none;
+      float: left;
+      font-weight: bold;
+    }
+    .panic-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: red;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 30px;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      animation: pulse 2s infinite;
+      z-index: 100;
+      cursor: pointer;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="stage-header">
+      <h1>עולם בלי מילים - משחק שפת גוף</h1>
+    </div>
+    
+    <div class="progress-bar">
+      <div class="progress" id="progress"></div>
+    </div>
+    
+    <div class="game-area">
+      <!-- סצנה 1: בפגישה עסקית -->
+      <div class="scenario active" id="scenario1">
+        <div class="scenario-header">סיטואציה 1: בפגישה עסקית</div>
+        <div class="scenario-description">
+          גבר יושב בפגישה, מצליב את ידיו על החזה ומרים את סנטרו כלפי מעלה תוך כדי שיחה.
+        </div>
+        <p>מה יכולה להיות המשמעות של שפת הגוף הזו?</p>
+        <div class="options">
+          <div class="option" onclick="selectOption(1, 1)">
+            <span class="option-indicator">✓</span>
+            ביטחון עצמי גבוה והתנשאות
+          </div>
+          <div class="option" onclick="selectOption(1, 2)">
+            <span class="option-indicator">✗</span>
+            מגננה וחוסר נוחות
+          </div>
+          <div class="option" onclick="selectOption(1, 3)">
+            <span class="option-indicator">✗</span>
+            ריכוז והקשבה עמוקה
+          </div>
+          <div class="option" onclick="selectOption(1, 4)">
+            <span class="option-indicator">✗</span>
+            עייפות וחוסר עניין
+          </div>
+        </div>
+        <div class="explanation" id="explanation1"></div>
+      </div>
+      
+      <!-- סצנה 2: בשיחה חברתית -->
+      <div class="scenario" id="scenario2">
+        <div class="scenario-header">סיטואציה 2: בשיחה חברתית</div>
+        <div class="scenario-description">
+          בחורה משחקת עם השיער שלה תוך כדי שיחה עם בחור שהכירה לא מזמן.
+        </div>
+        <p>מה יכולה להיות המשמעות של שפת הגוף הזו?</p>
+        <div class="options">
+          <div class="option" onclick="selectOption(2, 1)">
+            <span class="option-indicator">✗</span>
+            חוסר ביטחון וחרדה חברתית
+          </div>
+          <div class="option" onclick="selectOption(2, 2)">
+            <span class="option-indicator">✓</span>
+            פלרטוט ומשיכה רומנטית
+          </div>
+          <div class="option" onclick="selectOption(2, 3)">
+            <span class="option-indicator">✗</span>
+            שעמום וחוסר עניין
+          </div>
+          <div class="option" onclick="selectOption(2, 4)">
+            <span class="option-indicator">✗</span>
+            התנגדות למה שנאמר
+          </div>
+        </div>
+        <div class="explanation" id="explanation2"></div>
+      </div>
+      
+      <!-- סצנה 3: במהלך פרזנטציה -->
+      <div class="scenario" id="scenario3">
+        <div class="scenario-header">סיטואציה 3: במהלך פרזנטציה</div>
+        <div class="scenario-description">
+          איש עסקים מסתכל שוב ושוב בשעון שלו בזמן שמישהו מציג מצגת.
+        </div>
+        <p>מה יכולה להיות המשמעות של שפת הגוף הזו?</p>
+        <div class="options">
+          <div class="option" onclick="selectOption(3, 1)">
+            <span class="option-indicator">✗</span>
+            התלהבות מהתוכן המוצג
+          </div>
+          <div class="option" onclick="selectOption(3, 2)">
+            <span class="option-indicator">✗</span>
+            ריכוז וניהול זמן יעיל
+          </div>
+          <div class="option" onclick="selectOption(3, 3)">
+            <span class="option-indicator">✓</span>
+            חוסר סבלנות ושעמום
+          </div>
+          <div class="option" onclick="selectOption(3, 4)">
+            <span class="option-indicator">✗</span>
+            לחץ בגלל אירוע אחר בהמשך היום
+          </div>
+        </div>
+        <div class="explanation" id="explanation3"></div>
+      </div>
+      
+      <!-- סצנה 4: בראיון עבודה -->
+      <div class="scenario" id="scenario4">
+        <div class="scenario-header">סיטואציה 4: בראיון עבודה</div>
+        <div class="scenario-description">
+          מועמד לעבודה יושב, מתופף עם האצבעות על הברך ומניע את הרגל בתנועה מהירה מעלה ומטה.
+        </div>
+        <p>מה יכולה להיות המשמעות של שפת הגוף הזו?</p>
+        <div class="options">
+          <div class="option" onclick="selectOption(4, 1)">
+            <span class="option-indicator">✓</span>
+            עצבנות ומתח
+          </div>
+          <div class="option" onclick="selectOption(4, 2)">
+            <span class="option-indicator">✗</span>
+            שעמום וחוסר עניין בתפקיד
+          </div>
+          <div class="option" onclick="selectOption(4, 3)">
+            <span class="option-indicator">✗</span>
+            ביטחון עצמי גבוה ואנרגטיות
+          </div>
+          <div class="option" onclick="selectOption(4, 4)">
+            <span class="option-indicator">✗</span>
+            רצון לסיים את הראיון מהר
+          </div>
+        </div>
+        <div class="explanation" id="explanation4"></div>
+      </div>
+      
+      <!-- סצנה 5: בשיחה אישית -->
+      <div class="scenario" id="scenario5">
+        <div class="scenario-header">סיטואציה 5: בשיחה אישית</div>
+        <div class="scenario-description">
+          אדם מדבר כאשר כפות ידיו פתוחות כלפי מעלה וגופו נוטה מעט קדימה.
+        </div>
+        <p>מה יכולה להיות המשמעות של שפת הגוף הזו?</p>
+        <div class="options">
+          <div class="option" onclick="selectOption(5, 1)">
+            <span class="option-indicator">✗</span>
+            תגוננות ומגננה
+          </div>
+          <div class="option" onclick="selectOption(5, 2)">
+            <span class="option-indicator">✗</span>
+            דומיננטיות ושליטה
+          </div>
+          <div class="option" onclick="selectOption(5, 3)">
+            <span class="option-indicator">✓</span>
+            פתיחות וכנות
+          </div>
+          <div class="option" onclick="selectOption(5, 4)">
+            <span class="option-indicator">✗</span>
+            אדישות וחוסר מעורבות
+          </div>
+        </div>
+        <div class="explanation" id="explanation5"></div>
+      </div>
+      
+      <!-- מסך סיום המשחק -->
+      <div class="game-over" id="gameOver">
+        <h2>סיימת את המשחק!</h2>
+        <div class="score-info">התוצאה שלך: <span id="finalScore">0</span> מתוך 5</div>
+        <button class="restart-btn" onclick="restartGame()">שחק שוב</button>
+        <!-- כפתור לעבור למשחק הבא – מיקום 1 סנטימטר מתחת -->
+        <button class="next-game-btn" onclick="window.location.href='spy.html'">לעבור למשחק הבא</button>
+      </div>
+      
+      <!-- כפתור PANIC -->
+      <div class="panic-btn" onclick="panicMode()">PANIC!</div>
+      
+      <!-- כפתור "הרוס את העולם" -->
+      <button class="btn" onclick="destroyGame()" style="position: fixed; bottom: 80px; right: 20px; background: darkred;">הרוס את העולם</button>
+    </div>
+    
+    <div class="buttons">
+      <button id="prevBtn" onclick="prevScenario()" disabled>הקודם</button>
+      <button id="nextBtn" onclick="nextScenario()" disabled>הבא</button>
+    </div>
+  </div>
+  
+  <!-- Audio Elements -->
+  <audio id="backgroundMusic" src="epic-background-music-313043.mp3" loop></audio>
+  <audio id="explosionSound" src="my-first-recorded-explosion-103816.mp3"></audio>
+  <audio id="panicSound" src="man-screaming-259682.mp3"></audio>
+  <audio id="missionSuccessSound" src="mission-success-41211.mp3"></audio>
+  <audio id="transitionSound" src="cartoon-fail-trumpet-278822.mp3"></audio>
+  
+  <script>
+    // משתנים גלובליים
+    let currentScenario = 1;
+    const totalScenarios = 5;
+    let score = 0;
+    let selectedOptions = {};
+    let gameState = { persona: "", mood: "", currentSpyQuestion: 0 };
+    
+    // פונקציה לעדכון סרגל התקדמות
+    function updateProgressBar() {
+      const progress = ((currentScenario - 1) / totalScenarios) * 100;
+      document.getElementById('progress').style.width = `${progress}%`;
+    }
+    
+    // מערך תגובות מותאמות אישית לכל סצנה
+    const explanationData = {
+      1: {
+        correct: 1,
+        explanation: {
+          1: "נכון! הצלבת זרועות על החזה בשילוב עם הרמת סנטר מסמלים ביטחון עצמי והתנשאות, אך עלולים להתפס כמתנשאים.",
+          2: "לא מדויק. למרות שהצלבת זרועות לבדה יכולה לסמל מגננה, השילוב עם הרמת סנטר משנה את המשמעות לכיוון ביטחון עצמי.",
+          3: "טעות. ריכוז והקשבה עמוקה מתבטאים בדרך כלל בנטייה קדימה, לא בהצלבת זרועות.",
+          4: "לא נכון. עייפות וחוסר עניין מתבטאים בגוף שמוט או בהישענות אחורה, לא בהצלבת זרועות והרמת סנטר."
+        }
+      },
+      2: {
+        correct: 2,
+        explanation: {
+          1: "לא בהכרח. למרות שמשחק בשיער יכול לסמל חוסר ביטחון, בהקשר זה זה מרמז פלרטוט.",
+          2: "נכון! משחק בשיער הוא סימן קלאסי לפלרטוט, במיוחד במפגש עם אדם חדש.",
+          3: "טעות. שעמום מתבטא בהסחת דעת, לא במשחק בשיער.",
+          4: "לא מדויק. התנגדות למה שנאמר מתבטאת בהבעות אחרות."
+        }
+      },
+      3: {
+        correct: 3,
+        explanation: {
+          1: "טעות גדולה. הסתכלות חוזרת בשעון מצביעה על חוסר סבלנות ושעמום.",
+          2: "לא נכון. ניהול זמן יעיל כולל הסתכלות אחת, לא שוב ושוב.",
+          3: "נכון! הסתכלות חוזרת בשעון היא סימן מובהק לחוסר סבלנות ושעמום.",
+          4: "קרוב אך לא מדויק. אם היה לחץ אמיתי, ההתנהגות הייתה שונה."
+        }
+      },
+      4: {
+        correct: 1,
+        explanation: {
+          1: "נכון! תיפוף באצבעות ותנועת רגל מהירה הם סימנים קלאסיים לעצבנות ומתח, במיוחד בראיון עבודה.",
+          2: "לא נכון. שעמום מתבטא בישיבה רפויה, לא בתנועות מוגברות.",
+          3: "טעות. אנרגטיות חיובית מתבטאת בתנועות מכוונות, לא בתנועות לא רצוניות.",
+          4: "לא מדויק. רצון לסיים מהר היה מתבטא בצורה אחרת."
+        }
+      },
+      5: {
+        correct: 3,
+        explanation: {
+          1: "לא נכון. תגוננות מתבטאת בידיים מוצלבות או מוסתרות, לא בכפות ידיים פתוחות.",
+          2: "טעות. דומיננטיות מתבטאת בתנועות ידיים חדות, לא בפתיחות.",
+          3: "נכון! כפות ידיים פתוחות וגוף קדימה מסמלים פתיחות, כנות ורצון ליצור קשר אמיתי.",
+          4: "לגמרי לא. אדישות מתבטאת בגוף רפוי."
+        }
+      }
+    };
+    
+    // פונקציה לבחירת אפשרות בסצנות
+    function selectOption(scenario, option) {
+      selectedOptions[scenario] = option;
+      
+      const correct = explanationData[scenario].correct;
+      const explanation = explanationData[scenario].explanation[option];
+      const explanationElement = document.getElementById(`explanation${scenario}`);
+      
+      if (option === correct) {
+        score++;
+        try {
+          document.getElementById('missionSuccessSound').play();
+        } catch (err) {
+          console.error("Could not play sound: ", err);
+        }
+      } else {
+        try {
+          document.getElementById('transitionSound').play();
+        } catch (err) {
+          console.error("Could not play sound: ", err);
+        }
+      }
+      
+      explanationElement.innerHTML = `
+        <div class="explanation-header">המשוב שלך:</div>
+        <p>${explanation}</p>
+      `;
+      explanationElement.style.display = 'block';
+      
+      document.getElementById('nextBtn').disabled = false;
+      
+      const optionsElements = document.querySelectorAll(`#scenario${scenario} .option`);
+      optionsElements.forEach((opt, index) => {
+        opt.style.cursor = 'default';
+        opt.onclick = null;
+        if (index + 1 === correct) {
+          opt.classList.add('correct');
+          if (opt.querySelector('.option-indicator')) {
+            opt.querySelector('.option-indicator').style.display = 'inline-block';
+          }
+        } else if (index + 1 === option && option !== correct) {
+          opt.classList.add('incorrect');
+          if (opt.querySelector('.option-indicator')) {
+            opt.querySelector('.option-indicator').style.display = 'inline-block';
+          }
+        }
+      });
+    }
+    
+    // מעבר לסצנה הבאה
+    function nextScenario() {
+      if (currentScenario < totalScenarios) {
+        document.getElementById(`scenario${currentScenario}`).classList.remove('active');
+        currentScenario++;
+        document.getElementById(`scenario${currentScenario}`).classList.add('active');
+        document.getElementById('prevBtn').disabled = (currentScenario === 1);
+        document.getElementById('nextBtn').disabled = !selectedOptions[currentScenario];
+        updateProgressBar();
+      } else {
+        // הצגת מסך סיום המשחק
+        showGameOver();
+      }
+    }
+    
+    // חזרה לסצנה הקודמת
+    function prevScenario() {
+      if (currentScenario > 1) {
+        document.getElementById(`scenario${currentScenario}`).classList.remove('active');
+        currentScenario--;
+        document.getElementById(`scenario${currentScenario}`).classList.add('active');
+        document.getElementById('prevBtn').disabled = (currentScenario === 1);
+        document.getElementById('nextBtn').disabled = !selectedOptions[currentScenario];
+        updateProgressBar();
+      }
+    }
+    
+    // הצגת מסך סיום המשחק
+    function showGameOver() {
+      for (let i = 1; i <= totalScenarios; i++) {
+        document.getElementById(`scenario${i}`).classList.remove('active');
+      }
+      
+      document.getElementById('finalScore').textContent = score;
+      document.getElementById('gameOver').style.display = 'block';
+      document.getElementById('prevBtn').disabled = true;
+      document.getElementById('nextBtn').disabled = true;
+      
+      try {
+        if (score >= 4) {
+          document.getElementById('missionSuccessSound').play();
+        } else {
+          document.getElementById('transitionSound').play();
+        }
+      } catch (err) {
+        console.error("Could not play sound: ", err);
+      }
+    }
+    
+    // כפתור אתחול המשחק
+    function restartGame() {
+      currentScenario = 1;
+      score = 0;
+      selectedOptions = {};
+      gameState = { persona: "", mood: "", currentSpyQuestion: 0 };
+      
+      // איפוס כל הסצנות
+      for (let i = 1; i <= totalScenarios; i++) {
+        const scenario = document.getElementById(`scenario${i}`);
+        scenario.classList.remove('active');
+        const options = document.querySelectorAll(`#scenario${i} .option`);
+        options.forEach((opt, index) => {
+          opt.style.cursor = 'pointer';
+          opt.classList.remove('selected', 'correct', 'incorrect');
+          const newOpt = opt.cloneNode(true);
+          newOpt.onclick = function() { selectOption(i, index + 1); };
+          opt.parentNode.replaceChild(newOpt, opt);
+          const indicator = newOpt.querySelector('.option-indicator');
+          if (indicator) {
+            indicator.style.display = 'none';
+          }
+        });
+        const explanationEl = document.getElementById(`explanation${i}`);
+        if (explanationEl) explanationEl.style.display = 'none';
+      }
+      
+      document.getElementById('scenario1').classList.add('active');
+      document.getElementById('gameOver').style.display = 'none';
+      
+      document.getElementById('prevBtn').disabled = true;
+      document.getElementById('nextBtn').disabled = true;
+      
+      updateProgressBar();
+    }
+    
+    // כפתור PANIC
+    function panicMode() {
+      try {
+        document.getElementById('panicSound').play();
+      } catch (err) {
+        console.error("Could not play sound: ", err);
+      }
+      alert("PANIC MODE ACTIVATED – או פשוט תשתה קפה ותמשיך, החיים קצרים מדי!");
+    }
+    
+    // כפתור "הרוס את העולם"
+    function destroyGame() {
+      const overlay = document.createElement('div');
+      overlay.id = 'destroyOverlay';
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.backgroundColor = 'black';
+      overlay.style.opacity = '0.9';
+      overlay.style.color = 'red';
+      overlay.style.display = 'flex';
+      overlay.style.justifyContent = 'center';
+      overlay.style.alignItems = 'center';
+      overlay.style.fontSize = '36px';
+      overlay.style.zIndex = '9999';
+      overlay.innerHTML = "הרסת את העולם!";
+      document.body.appendChild(overlay);
+      
+      try {
+        document.getElementById('explosionSound').play();
+      } catch (err) {
+        console.error("Could not play sound: ", err);
+      }
+      
+      setTimeout(() => {
+        document.body.removeChild(overlay);
+      }, 3000);
+    }
+    
+    // מאזין לטעינת הדף
+    window.onload = function() {
+      updateProgressBar();
+      
+      // נסיון להפעיל את המוזיקה (תלוי במדיניות הדפדפן)
+      const bgMusic = document.getElementById('backgroundMusic');
+      bgMusic.volume = 0.3;
+      
+      // מטפל באירועי משתמש להפעלת המוזיקה
+      document.addEventListener('click', function() {
+        if (bgMusic.paused) {
+          bgMusic.play().catch(err => console.error("Could not play music: ", err));
+        }
+      });
+      
+      try {
+        bgMusic.play();
+      } catch (err) {
+        console.error("Could not autoplay music: ", err);
+      }
+    }
+  </script>
+</body>
+</html>

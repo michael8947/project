@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CommQuest – גיהנום חינוכי משוגע 9000 (חלק 1)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Rubik', sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      direction: rtl;
+      text-align: right;
+      color: #333;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stage-header {
+      text-align: center;
+      background: linear-gradient(135deg, #8e44ad 0%, #673ab7 100%);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      font-size: 22px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background-color: #e0e0e0;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .progress {
+      height: 100%;
+      background: linear-gradient(90deg, #8e44ad 0%, #9b59b6 100%);
+      border-radius: 10px;
+      width: 0%;
+      transition: width 0.5s;
+    }
+    .xp-counter {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: linear-gradient(135deg, #FFC107 0%, #FF9800 100%);
+      padding: 5px 10px;
+      border-radius: 20px;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .game-area {
+      padding: 20px;
+      background-color: #f8faff;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: inset 0 1px 5px rgba(0,0,0,0.05);
+      min-height: 300px;
+      position: relative;
+    }
+    .scene {
+      display: none;
+      animation: fadeIn 0.5s;
+    }
+    .scene.active {
+      display: block;
+    }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .option, .btn {
+      padding: 12px 15px;
+      background: linear-gradient(135deg, #ff7b54 0%, #ff5722 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s;
+      flex: 1 1 calc(50% - 10px);
+      min-width: 150px;
+      text-align: center;
+      box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+    }
+    .option:hover, .btn:hover {
+      background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+    }
+    .option.selected, .btn.selected {
+      background: linear-gradient(135deg, #8e44ad 0%, #673ab7 100%);
+    }
+    .btn {
+      display: inline-block;
+      min-width: 120px;
+      margin: 10px 0;
+      text-align: center;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    .explanation {
+      background-color: #e1f5fe;
+      border-left: 4px solid #03a9f4;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      display: none;
+    }
+    .chat-container {
+      background-color: #f1f1f1;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 15px 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .chat-container p {
+      padding: 8px 12px;
+      border-radius: 15px;
+      margin: 5px 0;
+      background-color: #e0e0e0;
+      display: inline-block;
+      max-width: 80%;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .persona-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 15px;
+      border-radius: 10px;
+      background: white;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      margin: 10px;
+      flex: 1;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    .persona-box:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .persona-box.selected {
+      background: #e8d5f6;
+      border: 2px solid #8e44ad;
+    }
+    .persona-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+    .persona-name {
+      font-weight: bold;
+    }
+    .mystic-intro {
+      font-style: italic;
+      color: #6c757d;
+      text-align: center;
+      margin: 20px 0;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+    .mood-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 10px;
+      flex: 1;
+      min-width: 120px;
+      transition: all 0.3s;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+    .mood-option:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .mood-option.selected {
+      background: #e8d5f6;
+      border: 2px solid #8e44ad;
+    }
+    .mood-icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+    .mood-name {
+      font-weight: bold;
+    }
+    .comic-container {
+      background: #fff;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 15px 0;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .chat-bubble {
+      background: #e9f5ff;
+      border-radius: 18px;
+      padding: 12px 15px;
+      margin: 10px 0;
+      position: relative;
+      display: inline-block;
+      max-width: 80%;
+      text-align: left;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .chat-bubble.right {
+      background: #e3f2fd;
+      margin-left: 20%;
+    }
+    .chat-bubble.left {
+      background: #f3e5f5;
+      margin-right: 20%;
+    }
+    .chat-bubble::after {
+      content: '';
+      position: absolute;
+      border: 10px solid transparent;
+    }
+    .chat-bubble.right::after {
+      border-left-color: #e3f2fd;
+      right: -18px;
+      top: 10px;
+    }
+    .chat-bubble.left::after {
+      border-right-color: #f3e5f5;
+      left: -18px;
+      top: 10px;
+    }
+    .panic-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: red;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 30px;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      animation: pulse 2s infinite;
+      z-index: 100;
+      cursor: pointer;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .tech-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 10px;
+      flex: 1;
+      min-width: 120px;
+      transition: all 0.3s;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+    .tech-option:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .tech-option.selected {
+      background: #e8d5f6;
+      border: 2px solid #8e44ad;
+    }
+    .tech-icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+    .tech-name {
+      font-weight: bold;
+      text-align: center;
+    }
+    .spy-question {
+      background: #f5f5f5;
+      border-left: 4px solid #9c27b0;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      font-size: 18px;
+    }
+    .spy-option {
+      display: block;
+      width: 100%;
+      padding: 12px 15px;
+      margin: 10px 0;
+      background: #ff7b54;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      text-align: right;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .spy-option:hover {
+      background: #ff5722;
+      transform: translateY(-2px);
+    }
+    .spy-option.selected {
+      background: #8e44ad;
+    }
+    .spy-feedback {
+      background-color: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+      font-weight: bold;
+      display: none;
+    }
+    /* Stage 4 – מבחן תקשורת */
+    #scene4 .comic-container {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="stage-header">
+      <h1>CommQuest – גיהנום חינוכי משוגע 9000</h1>
+    </div>
+    
+    <div class="progress-bar">
+      <div class="progress" id="progress"></div>
+    </div>
+    
+    <div class="xp-counter" id="xpCounter">XP: 0</div>
+    
+    <div class="game-area">
+      <!-- Stage P: בחירת דמות ומצב -->
+      <div class="scene active" id="sceneP">
+        <h2>שלב P – "מי אתה בכלל?"</h2>
+        <p>בחר את הדמות שלך למסע התקשורתי המטורף הזה:</p>
+        
+        <div class="options">
+          <div class="persona-box" onclick="selectPersona('comedian')" id="persona-comedian">
+            <div class="persona-icon">🤪</div>
+            <div class="persona-name">הקומיקאי</div>
+          </div>
+          <div class="persona-box" onclick="selectPersona('cool')" id="persona-cool">
+            <div class="persona-icon">😎</div>
+            <div class="persona-name">המגניב</div>
+          </div>
+          <div class="persona-box" onclick="selectPersona('smart')" id="persona-smart">
+            <div class="persona-icon">🧠</div>
+            <div class="persona-name">החכם המציק</div>
+          </div>
+          <div class="persona-box" onclick="selectPersona('robot')" id="persona-robot">
+            <div class="persona-icon">🤖</div>
+            <div class="persona-name">הרובוט האדיש</div>
+          </div>
+        </div>
+        
+        <p>בחר גם את מצב המשחק:</p>
+        
+        <div class="options">
+          <div class="mood-option" onclick="selectMood('chaos')" id="mood-chaos">
+            <div class="mood-icon">🤯</div>
+            <div class="mood-name">כאוס</div>
+          </div>
+          <div class="mood-option" onclick="selectMood('smart')" id="mood-smart">
+            <div class="mood-icon">🤓</div>
+            <div class="mood-name">חכם</div>
+          </div>
+          <div class="mood-option" onclick="selectMood('troll')" id="mood-troll">
+            <div class="mood-icon">🤡</div>
+            <div class="mood-name">טרול</div>
+          </div>
+        </div>
+        
+        <button class="btn" onclick="nextScene()" id="nextBtnP" disabled>התחל את המסע</button>
+      </div>
+      
+      <!-- Stage 0: פתיח אפל ומוגזם -->
+      <div class="scene" id="scene0">
+        <h2>שלב 0 – פתיח אפל ומוגזם</h2>
+        
+        <div class="mystic-intro">
+          <p>בלילות אפלים, כשהגשם מטפטף והרחובות שותקים – סוד עתיק מתעורר...</p>
+        </div>
+        
+        <div class="chat-container" id="mysteryChat">
+          <div class="chat-bubble left">ברוך הבא, בלש תקשורתי. העולם זקוק לך.</div>
+          <div class="chat-bubble left">סודות חבויים בכל פינה, ובכל מילה.</div>
+          <div class="chat-bubble left">העתיד בידיים שלך. 🔍</div>
+        </div>
+        
+        <div class="chat-bubble right" id="personaResponse"></div>
+        
+        <button class="btn" onclick="nextScene()">המשך במסע</button>
+      </div>
+      
+      <!-- Stage 1: מי מדבר פה? -->
+      <div class="scene" id="scene1">
+        <h2>שלב 1 – מי מדבר פה?</h2>
+        <p>זהה את הרגש בסיטואציה הבאה:</p>
+        
+        <div id="emotionScenario" class="comic-container">
+          <p><strong>תרחיש:</strong> <span id="scenarioText"></span></p>
+          <div class="scenario-image" id="scenarioImage" style="font-size: 40px; margin: 20px 0;"></div>
+        </div>
+        
+        <p>איזה רגש מתואר כאן?</p>
+        
+        <div class="options" id="emotionOptions">
+          <!-- אפשרויות נוצרות דינמית -->
+        </div>
+        
+        <div class="explanation" id="emotionFeedback"></div>
+        
+        <button class="btn" onclick="nextScene()" id="nextBtn1" disabled>המשך למשימה הבאה</button>
+      </div>
+      
+      <!-- Stage 2: תקשורת עתידנית מותאמת אישית -->
+      <div class="scene" id="scene2">
+        <h2>שלב 2 – תקשורת עתידנית מותאמת אישית</h2>
+        <p>שנת 2050, והתקשורת התפתחה באופן דרמטי. איזו טכנולוגיה תבחר?</p>
+        
+        <div id="futureScenario" class="comic-container">
+          <p><strong>תרחיש:</strong> <span id="futureText"></span></p>
+        </div>
+        
+        <div class="options">
+          <div class="tech-option" onclick="selectTechOption('telepathy')" id="tech-telepathy">
+            <div class="tech-icon">🧠</div>
+            <div class="tech-name">טלפתיה</div>
+          </div>
+          <div class="tech-option" onclick="selectTechOption('emotion')" id="tech-emotion">
+            <div class="tech-icon">💖</div>
+            <div class="tech-name">תרגום רגשות</div>
+          </div>
+          <div class="tech-option" onclick="selectTechOption('virtual')" id="tech-virtual">
+            <div class="tech-icon">🌐</div>
+            <div class="tech-name">תקשורת וירטואלית</div>
+          </div>
+          <div class="tech-option" onclick="selectTechOption('thoughts')" id="tech-thoughts">
+            <div class="tech-icon">🎯</div>
+            <div class="tech-name">העברת מחשבות</div>
+          </div>
+        </div>
+        
+        <div class="chat-container" id="techChat" style="display:none;"></div>
+        
+        <div class="explanation" id="techFeedback"></div>
+        
+        <button class="btn" onclick="nextScene()" id="nextBtn2" disabled>המשך למשימה הבאה</button>
+      </div>
+      
+      <!-- Stage 3: מדריך מרגלים לכיתה ח' -->
+      <div class="scene" id="scene3">
+        <h2>שלב 3 – מדריך מרגלים לכיתה ח'</h2>
+        <p>למד איך להעביר מסרים סודיים בלי לעורר חשד.</p>
+        
+        <div class="spy-question" id="spyQuestion"></div>
+        
+        <div id="spyOptions">
+          <!-- אפשרויות נוצרות דינמית -->
+        </div>
+        
+        <div class="spy-feedback" id="spyFeedback"></div>
+        
+        <button class="btn" onclick="nextSpyQuestion()" id="nextSpyBtn" disabled>השאלה הבאה</button>
+        <button class="btn" onclick="nextScene()" id="nextBtn3" style="display:none;">המשך לשלב הבא</button>
+      </div>
+      
+      <!-- Stage 4: מבחן תקשורת -->
+      <div class="scene" id="scene4">
+        <h2>שלב 4 – מבחן תקשורת</h2>
+        <div class="comic-container" id="quizContainer">
+          <p id="quizQuestion"></p>
+          <div id="quizOptions" class="options"></div>
+        </div>
+        <div class="explanation" id="quizFeedback"></div>
+        <button class="btn" onclick="nextQuizQuestion()" id="nextBtn4" disabled>שאלה הבאה</button>
+      </div>
+      
+      <!-- כפתור PANIC -->
+      <div class="panic-btn" onclick="panicMode()">PANIC!</div>
+      
+      <!-- כפתור "הרוס את המשחק" -->
+      <button class="btn" onclick="destroyGame()" style="position: fixed; bottom: 80px; right: 20px; background: darkred;">הרוס את המשחק</button>
+    </div>
+    
+    <div class="buttons">
+      <button id="prevBtn" onclick="prevScene()" disabled>הקודם</button>
+      <!-- כפתור "הבא" הגלובלי הוסר -->
+    </div>
+  </div>
+  
+  <!-- Audio Elements -->
+  <audio id="backgroundMusic" src="epic-background-music-313043.mp3" loop></audio>
+  <audio id="explosionSound" src="my-first-recorded-explosion-103816.mp3"></audio>
+  <audio id="panicSound" src="man-screaming-259682.mp3"></audio>
+  <audio id="missionSuccessSound" src="mission-success-41211.mp3"></audio>
+  <audio id="transitionSound" src="cartoon-fail-trumpet-278822.mp3"></audio>
+  
+  <script>
+    // הפעלת מוזיקת רקע ב-30% ווליום
+    const bgMusic = document.getElementById('backgroundMusic');
+    bgMusic.volume = 0.3;
+    bgMusic.play();
+    
+    document.addEventListener('click', function() {
+  if (bgMusic.paused) {
+    bgMusic.play().catch(err => console.error("לא הצליח להפעיל מוזיקת רקע:", err));
+  }
+});
+
+    // משתנים גלובליים
+    let currentScene = "P"; // P = בחירת דמות, 0-4 = שלבים
+    let totalScenes = 5;
+    let xp = 0;
+    let gameState = {
+      persona: "",
+      mood: "",
+      currentSpyQuestion: 0
+    };
+    
+    function updateProgressBar() {
+      const sceneNumber = currentScene === "P" ? 0 : parseInt(currentScene) + 1;
+      const progress = sceneNumber / totalScenes * 100;
+      document.getElementById('progress').style.width = progress + '%';
+    }
+    
+    function updateXP(points) {
+      xp += points;
+      document.getElementById('xpCounter').textContent = `XP: ${xp}`;
+      document.getElementById('xpCounter').style.transform = 'scale(1.2)';
+      setTimeout(() => {
+        document.getElementById('xpCounter').style.transform = 'scale(1)';
+      }, 300);
+    }
+    
+    function nextScene() {
+      let currentEl = document.getElementById(currentScene === "P" ? "sceneP" : "scene" + currentScene);
+      currentEl.classList.remove('active');
+      
+      if (currentScene === "P") {
+        currentScene = "0";
+        setupScene0();
+      } else {
+        let nextSceneNum = parseInt(currentScene) + 1;
+        if (nextSceneNum < totalScenes) {
+          currentScene = nextSceneNum.toString();
+          switch(currentScene) {
+            case "1":
+              setupScene1();
+              break;
+            case "2":
+              setupScene2();
+              break;
+            case "3":
+              setupScene3();
+              break;
+            case "4":
+              setupScene4();
+              break;
+          }
+        } else {
+          // בסיום השאלה האחרונה, לחיצה על "שאלה הבאה" תעביר אותך אוטומטית ל-talk.html
+          goToTalk();
+          return;
+        }
+      }
+      
+      let nextEl = document.getElementById(currentScene === "P" ? "sceneP" : "scene" + currentScene);
+      nextEl.classList.add('active');
+      
+      document.getElementById('prevBtn').disabled = (currentScene === "0");
+      updateProgressBar();
+    }
+    
+    function prevScene() {
+      if (currentScene === "0") return;
+      document.getElementById("scene" + currentScene).classList.remove('active');
+      currentScene = (parseInt(currentScene) - 1).toString();
+      document.getElementById("scene" + currentScene).classList.add('active');
+      document.getElementById('prevBtn').disabled = (currentScene === "0");
+      updateProgressBar();
+    }
+    
+    function selectPersona(persona) {
+      document.querySelectorAll('.persona-box').forEach(box => {
+        box.classList.remove('selected');
+      });
+      document.getElementById('persona-' + persona).classList.add('selected');
+      gameState.persona = persona;
+      checkPersonaComplete();
+    }
+    
+    function selectMood(mood) {
+      document.querySelectorAll('.mood-option').forEach(box => {
+        box.classList.remove('selected');
+      });
+      document.getElementById('mood-' + mood).classList.add('selected');
+      gameState.mood = mood;
+      checkPersonaComplete();
+    }
+    
+    function checkPersonaComplete() {
+      if (gameState.persona && gameState.mood) {
+        document.getElementById('nextBtnP').disabled = false;
+      }
+    }
+    
+    function setupScene0() {
+      let personaResponse = "";
+      switch(gameState.persona) {
+        case "comedian":
+          personaResponse = "אז אני צריך להציל את העולם? מי קבע שאני לא פשוט אספסוף על הספה ואצפה בסדרות כושלות? 🍿";
+          break;
+        case "cool":
+          personaResponse = "קלטתי את העניין... בוא נעשה את זה מגניב, גם אם העתיד נראה כמו קרקס מתפורר. 🕶️";
+          break;
+        case "smart":
+          personaResponse = "חשבתי על זה, ופתרתי את הבעיה לפני שהמוח שלי התחיל להיזרק. קדימה, נתחיל את הניתוח! 🔬";
+          break;
+        case "robot":
+          personaResponse = "קולט. סריקה... ניתוח תקשורתי מתחיל בעוד 3, 2, 1... 🤖";
+          break;
+      }
+      document.getElementById('personaResponse').textContent = personaResponse;
+    }
+    
+    function setupScene1() {
+      const scenarios = [
+        {
+          text: "חתול קופץ על שולחן וצועק על בורקס חם.",
+          image: "😾🍕",
+          options: ["שמחה", "רעב", "פחד", "כעס"],
+          correct: "רעב"
+        },
+        {
+          text: "נער פותח מבחן ומיד סוגר אותו, מביט לצדדים.",
+          image: "😰📝",
+          options: ["בלבול", "ביטחון", "חרדה", "שעמום"],
+          correct: "חרדה"
+        },
+        {
+          text: "רובוט שפתאום נכבה באמצע שיעור.",
+          image: "🤖💤",
+          options: ["תסכול", "שעמום", "עייפות", "תקלה"],
+          correct: "שעמום"
+        }
+      ];
+      const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+      document.getElementById('scenarioText').textContent = scenario.text;
+      document.getElementById('scenarioImage').textContent = scenario.image;
+      const optionsContainer = document.getElementById('emotionOptions');
+      optionsContainer.innerHTML = '';
+      scenario.options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.classList.add('option');
+        btn.textContent = option;
+        btn.addEventListener('click', () => selectEmotion(option, scenario.correct));
+        optionsContainer.appendChild(btn);
+      });
+      document.getElementById('emotionFeedback').style.display = 'none';
+      document.getElementById('nextBtn1').disabled = true;
+    }
+    
+    function selectEmotion(selected, correct) {
+      const feedbackEl = document.getElementById('emotionFeedback');
+      const isCorrect = selected === correct;
+      document.querySelectorAll('#emotionOptions .option').forEach(opt => {
+        if (opt.textContent === selected) {
+          opt.classList.add('selected');
+        } else {
+          opt.disabled = true;
+        }
+      });
+      if (isCorrect) {
+        feedbackEl.innerHTML = `<p>👏 נכון מאוד! הרגש הוא אכן ${correct}.</p>`;
+        document.getElementById('missionSuccessSound').play();
+        updateXP(10);
+      } else {
+        feedbackEl.innerHTML = `<p>😒 טעית! נראה שהקשר הרגשי שלך בסדר גמור – כמו מסיבת חיסור בסבך רגשות.</p>`;
+        document.getElementById('transitionSound').play();
+      }
+      feedbackEl.style.display = 'block';
+      document.getElementById('nextBtn1').disabled = false;
+    }
+    
+    function setupScene2() {
+      const scenarios = [
+        "רחפנים מעבירים מסרים, והמורים לומדים איך לרקוד בסנכרון.",
+        "שיעורי VR: עכשיו אפשר להיות בכיתה ולהרגיש כאילו אתה באמת בודד במציאות מדומה.",
+        "מוח-ענן: חשבו על זה כמו על טוויטר, רק עם פחות מילים ויותר מחשבות עמוקות."
+      ];
+      const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+      document.getElementById('futureText').textContent = scenario;
+      document.getElementById('techChat').style.display = 'none';
+      document.getElementById('nextBtn2').disabled = true;
+    }
+    
+    function selectTechOption(option) {
+      document.querySelectorAll('.tech-option').forEach(opt => {
+        opt.classList.remove('selected');
+        opt.disabled = true;
+      });
+      document.getElementById('tech-' + option).classList.add('selected');
+      let response = "";
+      switch(gameState.persona) {
+        case "comedian":
+          response = "🤪 אחלה בחירה! גם העתיד לא יכול לעמוד מול בדיחה טובה.";
+          break;
+        case "cool":
+          response = "😎 בחירה מגניבה. העתיד כבר נראה הרבה יותר קול.";
+          break;
+        case "smart":
+          response = "🧠 ניתוח מהיר: הבחירה שלך תתרום לאופטימיזציה של התקשורת העתידנית.";
+          break;
+        case "robot":
+          response = "🤖 נתונים מעובדים: בחירה אופטימלית להעברת מחשבות ללא הפרעות.";
+          break;
+      }
+      document.getElementById('techChat').textContent = response;
+      document.getElementById('techChat').style.display = 'block';
+      updateXP(10);
+      document.getElementById('nextBtn2').disabled = false;
+    }
+    
+    let spyQuestions = [
+      {
+        text: "מישהו ניסה לשלוח הודעה סודית באמצע השיעור, מה תגיב?",
+        options: ["שתיקה", "רעש רקע", "שאלה מצחיקה", "מבט חשאי"],
+        correct: "מבט חשאי"
+      },
+      {
+        text: "כיצד מעבירים מידע בלי מילים?",
+        options: ["תנועה", "עיניים", "חיוך", "מחיאות כפיים"],
+        correct: "עיניים"
+      },
+      {
+        text: "איך תגיב כשמישהו נודע לך סוד שאסור לשמוע?",
+        options: ["צחוק", "הסתרה", "התעלמות", "התפרצות"],
+        correct: "התעלמות"
+      }
+    ];
+    
+    function setupScene3() {
+      gameState.currentSpyQuestion = 0;
+      loadSpyQuestion();
+      document.getElementById('spyFeedback').style.display = 'none';
+      document.getElementById('nextSpyBtn').disabled = true;
+      document.getElementById('nextBtn3').style.display = 'none';
+    }
+    
+    function loadSpyQuestion() {
+      const question = spyQuestions[gameState.currentSpyQuestion];
+      document.getElementById('spyQuestion').textContent = question.text;
+      const optionsContainer = document.getElementById('spyOptions');
+      optionsContainer.innerHTML = '';
+      question.options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.classList.add('spy-option');
+        btn.textContent = option;
+        btn.addEventListener('click', () => selectSpyAnswer(option, question.correct));
+        optionsContainer.appendChild(btn);
+      });
+      document.getElementById('spyFeedback').style.display = 'none';
+    }
+    
+    function selectSpyAnswer(selected, correct) {
+      const feedbackEl = document.getElementById('spyFeedback');
+      const isCorrect = selected === correct;
+      document.querySelectorAll('#spyOptions .spy-option').forEach(opt => {
+        if (opt.textContent === selected) {
+          opt.classList.add('selected');
+        } else {
+          opt.disabled = true;
+        }
+      });
+      if (isCorrect) {
+        feedbackEl.innerHTML = `<p>👏 נכון! זו הייתה הבחירה הנכונה.</p>`;
+        document.getElementById('missionSuccessSound').play();
+        updateXP(10);
+      } else {
+        feedbackEl.innerHTML = `<p>😒 טעות! לא תמיד הדברים זורמים כמו שציפית.</p>`;
+        document.getElementById('transitionSound').play();
+      }
+      feedbackEl.style.display = 'block';
+      if (gameState.currentSpyQuestion < spyQuestions.length - 1) {
+        document.getElementById('nextSpyBtn').disabled = false;
+      } else {
+        document.getElementById('nextBtn3').style.display = 'inline-block';
+      }
+    }
+    
+    function nextSpyQuestion() {
+      gameState.currentSpyQuestion++;
+      if (gameState.currentSpyQuestion < spyQuestions.length) {
+        loadSpyQuestion();
+        document.getElementById('nextSpyBtn').disabled = true;
+      }
+    }
+    
+    let quizQuestions = [
+      {
+        text: "תקשורת זה לא רק מילים. מה יותר חשוב לדעת לקרוא?",
+        options: ["הבעות פנים", "סימני גוף", "מיילים", "רמזים סתומים"],
+        correct: "רמזים סתומים"
+      },
+      {
+        text: "כשמישהו אומר 'בוא נדבר על זה', מה זה באמת אומר?",
+        options: ["הכל בסדר", "תתכונן להרפתקה", "יש בעיה", "תמשיך לבלות"],
+        correct: "יש בעיה"
+      },
+      {
+        text: "איך מגיב הקומיקאי כשנלחץ לחץ תקשורתי?",
+        options: ["עם בדיחה", "עם שתיקה", "עם צעקה", "עם ריקוד מטורף"],
+        correct: "עם בדיחה"
+      }
+    ];
+    let currentQuizIndex = 0;
+    
+    function setupScene4() {
+      currentQuizIndex = 0;
+      loadQuizQuestion();
+      document.getElementById('quizFeedback').style.display = 'none';
+      document.getElementById('nextBtn4').disabled = true;
+    }
+    
+    function loadQuizQuestion() {
+      const question = quizQuestions[currentQuizIndex];
+      document.getElementById('quizQuestion').textContent = question.text;
+      const optionsContainer = document.getElementById('quizOptions');
+      optionsContainer.innerHTML = '';
+      question.options.forEach(option => {
+        const btn = document.createElement('button');
+        btn.classList.add('option');
+        btn.textContent = option;
+        btn.addEventListener('click', () => selectQuizAnswer(option, question.correct));
+        optionsContainer.appendChild(btn);
+      });
+    }
+    
+    function selectQuizAnswer(selected, correct) {
+      const feedbackEl = document.getElementById('quizFeedback');
+      const isCorrect = selected === correct;
+      document.querySelectorAll('#quizOptions .option').forEach(opt => {
+        if (opt.textContent === selected) {
+          opt.classList.add('selected');
+        } else {
+          opt.disabled = true;
+        }
+      });
+      if (isCorrect) {
+        feedbackEl.innerHTML = `<p>👏 נכון! נראה שיש בך את המוח התקשורתי של דור הבא.</p>`;
+        document.getElementById('missionSuccessSound').play();
+        updateXP(10);
+      } else {
+        feedbackEl.innerHTML = `<p>😒 טעות! אולי כדאי להאזין לחדשות במקום לנסות להבין את הקוד של החיים.</p>`;
+        document.getElementById('transitionSound').play();
+      }
+      feedbackEl.style.display = 'block';
+      document.getElementById('nextBtn4').disabled = false;
+    }
+    
+    function nextQuizQuestion() {
+      currentQuizIndex++;
+      if (currentQuizIndex < quizQuestions.length) {
+        loadQuizQuestion();
+        document.getElementById('quizFeedback').style.display = 'none';
+        document.getElementById('nextBtn4').disabled = true;
+      } else {
+        // בסיום השאלה האחרונה, לחיצה על "שאלה הבאה" תעביר אותך אוטומטית ל-talk.html
+        goToTalk();
+      }
+    }
+    
+    function panicMode() {
+      document.getElementById('panicSound').play();
+      alert("PANIC MODE ACTIVATED – או פשוט תשתה קפה ותמשיך, החיים קצרים מדי!");
+    }
+    
+    // כפתור "הרוס את המשחק"
+    function destroyGame() {
+      const overlay = document.createElement('div');
+      overlay.id = 'destroyOverlay';
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.backgroundColor = 'black';
+      overlay.style.opacity = '0.9';
+      overlay.style.color = 'red';
+      overlay.style.display = 'flex';
+      overlay.style.justifyContent = 'center';
+      overlay.style.alignItems = 'center';
+      overlay.style.fontSize = '36px';
+      overlay.style.zIndex = '9999';
+      overlay.innerHTML = "הרסת את העולם!";
+      document.body.appendChild(overlay);
+      
+      document.getElementById('explosionSound').play();
+      
+      setTimeout(() => {
+        document.body.removeChild(overlay);
+      }, 3000);
+    }
+    
+    // מעבר לדף talk.html
+    function goToTalk() {
+      document.getElementById('transitionSound').play();
+      setTimeout(() => {
+        window.location.href = "talk.html";
+      }, 1500);
+    }
+    
+    window.onload = function() {
+      bgMusic.play();
+    }
+    
+    // פונקציות נוספות לניהול המעבר בין הסצנות
+    function updateProgressBar() {
+      const sceneNumber = currentScene === "P" ? 0 : parseInt(currentScene) + 1;
+      const progress = sceneNumber / totalScenes * 100;
+      document.getElementById('progress').style.width = progress + '%';
+    }
+    
+    function restartGame() {
+      currentScene = 1;
+      xp = 0;
+      gameState = { persona: "", mood: "", currentSpyQuestion: 0 };
+      
+      document.querySelectorAll('.persona-box, .mood-option').forEach(box => {
+        box.classList.remove('selected');
+      });
+      document.getElementById('nextBtnP').disabled = true;
+      
+      for (let i = 1; i <= totalScenes; i++) {
+        const scene = document.getElementById(`scene${i}`);
+        scene.classList.remove('active');
+        const options = document.querySelectorAll(`#scene${i} .option`);
+        options.forEach((opt, index) => {
+          opt.style.cursor = 'pointer';
+          opt.classList.remove('selected');
+          opt.onclick = function() { selectOption(i, index + 1); };
+        });
+        document.getElementById(`emotionFeedback`) && (document.getElementById(`emotionFeedback`).style.display = 'none');
+        document.getElementById(`techFeedback`) && (document.getElementById(`techFeedback`).style.display = 'none');
+        document.getElementById(`spyFeedback`) && (document.getElementById(`spyFeedback`).style.display = 'none');
+        document.getElementById(`quizFeedback`) && (document.getElementById(`quizFeedback`).style.display = 'none');
+      }
+      
+      document.getElementById('scene1').classList.add('active');
+      document.getElementById('gameOver').style.display = 'none';
+      
+      document.getElementById('prevBtn').disabled = true;
+      
+      updateProgressBar();
+    }
+  </script>
+</body>
+</html>

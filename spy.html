@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>סימולטור שפת גוף לסוכני חשאי</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* עיצוב כללי משודרג */
+    body {
+      font-family: 'Rubik', sans-serif;
+      background: linear-gradient(135deg, #e6e9f0, #eef1f5);
+      margin: 0;
+      padding: 20px;
+      direction: rtl;
+      text-align: right;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background-color: #fff;
+      border-radius: 15px;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.15);
+      padding: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+    header h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 2.5em;
+      color: #673ab7;
+    }
+    .mission-briefing h2 {
+      color: #8e44ad;
+      margin-bottom: 10px;
+    }
+    .mission-briefing p {
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+    .agent-status {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 0;
+      background: #f7f7f7;
+      padding: 15px;
+      border-radius: 10px;
+    }
+    .status-item {
+      text-align: center;
+    }
+    .status-label {
+      font-weight: bold;
+      color: #555;
+    }
+    .status-value {
+      font-size: 1.2em;
+      margin-top: 5px;
+    }
+    .agent-avatar {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .avatar-face {
+      width: 120px;
+      height: 120px;
+      background: #ddd;
+      border-radius: 50%;
+      margin: 0 auto 10px;
+    }
+    .avatar-eyes {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+    .avatar-eye {
+      width: 20px;
+      height: 20px;
+      background: #333;
+      border-radius: 50%;
+    }
+    #mouth {
+      width: 60px;
+      height: 10px;
+      background: #333;
+      border-radius: 5px;
+      margin: 10px auto;
+    }
+    .suspicion-meter {
+      margin: 20px 0;
+      text-align: center;
+    }
+    .meter-container {
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+      height: 25px;
+      margin-bottom: 5px;
+    }
+    .meter-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #8e44ad, #9b59b6);
+      width: 20%;
+      transition: width 0.5s;
+    }
+    .meter-label {
+      font-weight: bold;
+      color: #333;
+    }
+    .game-area {
+      background: #f8faff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: inset 0 1px 5px rgba(0,0,0,0.1);
+      min-height: 300px;
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .level-indicator {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+      color: #8e44ad;
+    }
+    .scenario p {
+      font-size: 1.1em;
+      line-height: 1.6;
+    }
+    .options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0;
+      justify-content: center;
+    }
+    .option-btn {
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #ff7b54, #ff5722);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: all 0.3s;
+      flex: 1 1 calc(45% - 10px);
+      min-width: 180px;
+      text-align: center;
+      box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+    }
+    .option-btn:hover {
+      background: linear-gradient(135deg, #ff5722, #e64a19);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+    }
+    .feedback {
+      text-align: center;
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 1.1em;
+    }
+    .feedback.success {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+    }
+    .feedback.failure {
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+    }
+    .tip-container {
+      margin-top: 10px;
+      font-style: italic;
+      color: #666;
+    }
+    /* מודלים */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 200;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.7);
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    .modal-btn {
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #8e44ad, #673ab7);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.3s;
+    }
+    .modal-btn:hover {
+      background: linear-gradient(135deg, #673ab7, #5e35b1);
+      transform: translateY(-2px);
+    }
+    /* סגנון מיוחד למסך הסיום */
+    #game-complete-modal .modal-content.final {
+      padding: 40px;
+      border: 3px solid #8e44ad;
+    }
+    #game-complete-modal .modal-content.final h2 {
+      font-size: 3em;
+      margin-bottom: 20px;
+      color: #8e44ad;
+    }
+    #game-complete-modal .modal-content.final p {
+      font-size: 2em;
+      font-weight: bold;
+      color: #d81b60;
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+      <h1>🕵️‍♂️ סימולטור שפת גוף לסוכני חשאי 🕵️‍♀️</h1>
+  </header>
+  
+  <div class="container">
+      <div class="mission-briefing">
+          <h2>תדריך משימה סודי עליון</h2>
+          <p>סוכן, המשימה שלך היא לשלוט באמנות ההטעיה של שפת הגוף. הצלחתך תלויה ביכולתך לשדר קור רוח – גם כשבליבך בורקס של חשדנות. זכר: חצי מהמשימה הוא לא להיתפס, והחצי השני הוא להיראות כל כך מוזר שאפילו המראה ישאל "מי זה?"</p>
+      </div>
+      
+      <div class="agent-status">
+          <div class="status-item">
+              <div class="status-label">משימה</div>
+              <div class="status-value" id="mission-status">בתהליך</div>
+          </div>
+          <div class="status-item">
+              <div class="status-label">רמת מיומנות</div>
+              <div class="status-value" id="agent-level">מתחיל</div>
+          </div>
+          <div class="status-item">
+              <div class="status-label">כיסויים נחשפו</div>
+              <div class="status-value" id="covers-blown">0</div>
+          </div>
+      </div>
+      
+      <div class="agent-avatar">
+          <div class="avatar-face"></div>
+          <div class="avatar-eyes">
+              <div class="avatar-eye" id="left-eye"></div>
+              <div class="avatar-eye" id="right-eye"></div>
+          </div>
+          <div class="avatar-mouth" id="mouth"></div>
+      </div>
+      
+      <div class="suspicion-meter">
+          <h3>מדד חשד</h3>
+          <div class="meter-container">
+              <div class="meter-fill" id="suspicion-fill">20%</div>
+          </div>
+          <div class="meter-label" id="suspicion-label">20%</div>
+      </div>
+      
+      <div class="game-area">
+          <div class="level-indicator" id="current-level">רמה 1: חדירת כיתה</div>
+          <div class="scenario" id="scenario-text">
+              <p>אתה חשאי בכיתה של תיכון. המורה מסתכלת ישירות עליך, חושדת שאולי אינך תלמיד אמיתי. עליך להימנע מחשד.</p>
+          </div>
+          
+          <div class="options" id="options-container">
+              <!-- אפשרויות יתווספו באמצעות JavaScript -->
+          </div>
+          
+          <div class="feedback" id="feedback-container">
+              <p id="feedback-text"></p>
+              <div class="tip-container" id="spy-tip">
+                  <strong>טיפ סוכני:</strong> <span id="tip-text"></span>
+              </div>
+          </div>
+      </div>
+  </div>
+  
+  <!-- מודלים -->
+  <div class="modal" id="level-complete-modal">
+      <div class="modal-content">
+          <h2 class="modal-title" id="modal-title">הרמה הושלמה!</h2>
+          <p id="modal-text">השלמת בהצלחה את תרגיל האימון הזה.</p>
+          <button class="modal-btn" id="next-level-btn">משימה הבאה</button>
+      </div>
+  </div>
+  
+  <div class="modal" id="game-over-modal">
+      <div class="modal-content">
+          <h2 class="modal-title">המשימה נכשלה!</h2>
+          <p id="game-over-text">הכיסוי שלך נחשף. זהו הזמן לשקול מחדש את הגישה שלך.</p>
+          <button class="modal-btn" id="restart-btn">התחל מחדש את האימון</button>
+      </div>
+  </div>
+  
+  <div class="modal" id="game-complete-modal">
+      <div class="modal-content final">
+          <h2>האימון הושלם!</h2>
+          <p>זכית בבושת פנים ומדלייה מtemu!</p>
+          <button class="modal-btn" id="restart-game-btn">התחל מחדש את האימון</button>
+      </div>
+  </div>
+  
+  <script>
+      // מצב המשחק
+      const gameState = {
+          suspicionLevel: 20,
+          currentLevel: 1,
+          maxLevel: 5,
+          coversBlown: 0,
+          agentLevel: "מתחיל"
+      };
+      
+      // תרחישי המשחק ואפשרויות
+      const gameLevels = [
+          {
+              title: "רמה 1: חדירת כיתה",
+              scenario: "אתה חשאי בכיתה של תיכון. המורה מסתכלת ישירות עליך, חושדת שאולי אינך תלמיד אמיתי. עליך להימנע מחשד.",
+              options: [
+                  {
+                      text: "שמור על קשר עין רגוע עם הפסקות טבעיות ותעמוד כאילו אתה רושם הערות",
+                      result: "מושלם! המורה שם לב להתנהגותך המעורבת אך הטבעית. אפילו אם במוחך מתגנבת הומור שחור, החוץ נראה מקצועי.",
+                      suspicionChange: -15,
+                      success: true,
+                      tip: "התנהגות אותנטית היא המפתח – לא להיראות כמו פסל."
+                  },
+                  {
+                      text: "הבט בעיניים אינטנסיביות בלי להבהב כדי להראות עליונות",
+                      result: "אוי, המורה נראית כאילו נתקלה במראה מקריאה. זה בהחלט לא תדמית תלמידית.",
+                      suspicionChange: 25,
+                      success: false,
+                      tip: "מבט אינטנסיבי בלי הפסקות מושך חשד. קצת אנושיות לא מזיקה."
+                  },
+                  {
+                      text: "הסתכל למטה על השולחן והימנע מכל קשר עין",
+                      result: "המורה חושדת שמסתתר סוד אפל. הימנעות מוחלטת מקשר עין עלולה להיראות חשודה.",
+                      suspicionChange: 15,
+                      success: false,
+                      tip: "איזון הוא המפתח – לא לגזול את כל הקשר העין."
+                  },
+                  {
+                      text: "שקף בעדינות את שפת הגוף של המורה תוך הבעת עניין",
+                      result: "מהלך חכם! המורה מרגישה קרבה תת-מודעת ואתה ממשיך בסגנון מרגל אמיתי.",
+                      suspicionChange: -10,
+                      success: true,
+                      tip: "העתקת שפת גוף יכולה ליצור חיבור – רק אל תעשה זאת בצורה בולטת מדי."
+                  }
+              ]
+          },
+          {
+              title: "רמה 2: חדר חקירה",
+              scenario: "הובאו אותך לראיון. מנהל בית הספר חושד שהיית מעורב במקרה תוצאות המבחן האבודות. שמור על כיסוי הזהות שלך בזמן הראיון.",
+              options: [
+                  {
+                      text: "צלב את ידיך בצורה מגוננת ודבר בביטחון",
+                      result: "המנהל שם לב לשפת הגוף הסגורה שלך שמנוגדת לדיבורך הבטוח – זה מעורר סימני אזהרה.",
+                      suspicionChange: 20,
+                      success: false,
+                      tip: "התאם את שפת הגוף לדיבור – ידיים מצטלבות עלולות להיראות חשודות."
+                  },
+                  {
+                      text: "השאר את ידיך גלויים, התכופף מעט קדימה, ודבר בקצב מדוד",
+                      result: "בחירה מצוינת! כפות הידיים הפתוחות והנטייה קדימה מציגות כנות ומעורבות.",
+                      suspicionChange: -20,
+                      success: true,
+                      tip: "ידיים גלויות מעידות על אמינות – גם אם אתה מרגיש כאילו אתה בישיבת יוגה חשאית."
+                  },
+                  {
+                      text: "עצבן את עצמך ודבר במהירות כדי להיראות נרגש אך תמים",
+                      result: "המנהל לא מצליח להחליט אם אתה טבעי או מסתיר משהו – האווירה קצת מתוחה.",
+                      suspicionChange: 5,
+                      success: false,
+                      tip: "התלהבות מוגזמת עלולה להדגיש חוסר נוחות, לא תמיד הדבר הנכון."
+                  },
+                  {
+                      text: "התאם את דפוס הנשימה שלך לזו של המנהל ליצירת סינכרון פסיכולוגי",
+                      result: "מהלך חכם! סינכרון הנשימה יוצר חיבור תת-מודע ואמון בלתי מוסבר.",
+                      suspicionChange: -15,
+                      success: true,
+                      tip: "סינכרון נשימתי יכול להרגיע – אך אל תהפוך רובוט אמיתי."
+                  }
+              ]
+          },
+          {
+              title: "רמה 3: המבחן הסופי",
+              scenario: "אתה באירוע סטודנטים, בין מורים לסוכנים חשודים. השתלב בקלילות תוך חילוץ מידע על המבחן הקרוב.",
+              options: [
+                  {
+                      text: "השתמש בגוף פתוח כשאתה מדבר עם המורים ושמור על תנוחה רגועה עם הסטודנטים",
+                      result: "ביצוע מושלם! כולם מרגישים שאתה משתייך לקבוצה – גם אם אתה מתכנן לרוץ לממלכה אחרת ברגע שהשעון מצלצל.",
+                      suspicionChange: -25,
+                      success: true,
+                      tip: "התאמת שפת הגוף לסביבה יוצרת אווירה טבעית – רק אל תעשה את זה כאילו אתה במסיבת תחפושות."
+                  },
+                  {
+                      text: "שמור על הבעה ניטרלית ותנועות מינימליות",
+                      result: "השקט שלך מדבר בעד עצמו – אך כמה אנשים חשדו שאתה 'אינטנסיבי' מדי.",
+                      suspicionChange: 15,
+                      success: false,
+                      tip: "לפעמים שקט מוחלט מושך תשומת לב. גם סוכן צריך לזוז קצת."
+                  },
+                  {
+                      text: "השתמש במגע אסטרטגי – נגיעה קצרה בכתף בזמן הצגת נקודות חשובות",
+                      result: "מגע אסטרטגי יוצר קרבה מיידית – ממש כמו קסם שחור של אמון.",
+                      suspicionChange: -20,
+                      success: true,
+                      tip: "מגע עדין יכול לשבור את הקרח – רק אל תנסה להפוך את זה לטעימת נגיעות פרועה."
+                  },
+                  {
+                      text: "צחק בקול רם על כל הבדיחות והיה מלא אנרגיה",
+                      result: "ההתלהבות המופרזת שלך העלתה את רמת החשד – נראה כאילו יצאת להופעת סטנד-אפ באמצע שיעור.",
+                      suspicionChange: 30,
+                      success: false,
+                      tip: "להיות טבעי הוא המפתח – התלהבות מוגזמת עלולה להפוך אותך להופעה מוזרה."
+                  }
+              ]
+          },
+          {
+              title: "רמה 4: מסיבת סוכנים",
+              scenario: "הגעת למסיבת על-גג חשאית, בין סוכנים שמתחרים באלגנטיות. כאן, גם אם הלב שלך דופק כאילו הוא במרדף, צריך להיראות קר ומסתורי – או לפחות לא להיראות כמו מישהו ששרוי בברייקדאונס.",
+              options: [
+                  {
+                      text: "רקוד ריקוד מטורף שמשלב תנועות לא מתואמות",
+                      result: "האויבים צחקו עד כאב בטן – כנראה שהם לא מצפים ממך להיות 'אמן' ריקודים.",
+                      suspicionChange: 20,
+                      success: false,
+                      tip: "לא כל ריקוד הוא אמנות – לפעמים פחות זה יותר."
+                  },
+                  {
+                      text: "שמור על זווית קפואה ומסתורית, כאילו נשמתך נשלחה ממסגד חשאי",
+                      result: "מצוין! אף אחד לא יעלה על נס כשאתה נראה כאילו כל הסודות שלך נחתמו בחושך.",
+                      suspicionChange: -15,
+                      success: true,
+                      tip: "מסתורין הוא כלי עוצמתי – קצת פחות חיוכים, קצת יותר הִסְתּוֹר."
+                  },
+                  {
+                      text: "עורר פרובוקציה עם חיוך קטן ומבט ממלמל",
+                      result: "החיוך שלך היה חריף מדי – כאילו אתה מציע סנדוויץ' ללא מילוי, והאווירה נשארה מתוקה מדי.",
+                      suspicionChange: 10,
+                      success: false,
+                      tip: "פרובוקציה עדינה יכולה לעזור, אך אל תגזים עם ההומור."
+                  },
+                  {
+                      text: "העתק את תנועות הגוף של הסובבים אותך במלוא ההתמדה",
+                      result: "מעולה! אתה מתמזג עם הקהל עד כדי כך שאף אחד לא מבחין – כמעט כמו הופעת מראה אנושית.",
+                      suspicionChange: -10,
+                      success: true,
+                      tip: "סנכרון עם הסביבה יכול להפחית חשד – רק אל תשכח להיות עצמך (או לפחות גרסה מתוחכמת שלך)."
+                  }
+              ]
+          },
+          {
+              title: "רמה 5: האתגר הסופי",
+              scenario: "הגעת ללב המבצר של יריבך – שם מנהיג מסתורי מצפה לראיון גורלי. הצלחה תלויה ברמת השכנוע שלך, גם אם זה אומר להפעיל קצת קסם שחור בשפת הגוף.",
+              options: [
+                  {
+                      text: "השתמש בביטחון מלא ודבר עם תנועות ריקוד נועזות",
+                      result: "הפצצת הכל! אך האויבים חשבו שמדובר בהפגנה תרבותית – החשד רק עלה.",
+                      suspicionChange: 30,
+                      success: false,
+                      tip: "ביטחון זה טוב, אך יותר מדי עלול להיראות כמו מופע קומיקסי."
+                  },
+                  {
+                      text: "שמור על נינוחות מתוחכמת, הקשב והתבטא בקצב מדוד",
+                      result: "נהדר! הנינוחות שלך זכתה להערכה, גם אם נראו כאילו אתה מתעכב על מחשבות סודיות.",
+                      suspicionChange: -20,
+                      success: true,
+                      tip: "קצב מדוד יכול להרגיע – כמו מדיטציה חשאית במשרד חשאי."
+                  },
+                  {
+                      text: "הזדרז לענות עם תגובות חדות, גם אם הן נראות מבריקות מדי",
+                      result: "אוי, זה היה כמו סיסמה שברור שהיא נסתרה – נחרץ אך מעורר חשד.",
+                      suspicionChange: 15,
+                      success: false,
+                      tip: "חדות בהחלט מדברת, אך יותר מדי עלולה לחשוף אותך."
+                  },
+                  {
+                      text: "הדגם את כל טכניקות ההטעיה שלמדת ושדר שפת גוף סוחפת בכל משפט",
+                      result: "מהלך גאוני! הצלחת לשכנע את כולם – ואפילו עצמך – עד שכמעט אינך נראה, כמו צל במעמקי החשאיות.",
+                      suspicionChange: -25,
+                      success: true,
+                      tip: "לבסוף, כל מה שלמדת משתלם – המשך בשיטה זו ושמור על סודיות בלתי נראית."
+                  }
+              ]
+          }
+      ];
+      
+      // אלמנטים מה-DOM
+      const suspicionFill = document.getElementById("suspicion-fill");
+      const suspicionLabel = document.getElementById("suspicion-label");
+      const scenarioText = document.getElementById("scenario-text");
+      const optionsContainer = document.getElementById("options-container");
+      const feedbackContainer = document.getElementById("feedback-container");
+      const feedbackText = document.getElementById("feedback-text");
+      const tipText = document.getElementById("tip-text");
+      const currentLevelIndicator = document.getElementById("current-level");
+      const levelCompleteModal = document.getElementById("level-complete-modal");
+      const gameOverModal = document.getElementById("game-over-modal");
+      const gameCompleteModal = document.getElementById("game-complete-modal");
+      const nextLevelBtn = document.getElementById("next-level-btn");
+      const restartBtn = document.getElementById("restart-btn");
+      const restartGameBtn = document.getElementById("restart-game-btn");
+      const missionStatus = document.getElementById("mission-status");
+      const agentLevelElem = document.getElementById("agent-level");
+      const coversBlown = document.getElementById("covers-blown");
+      const modalTitle = document.getElementById("modal-title");
+      const modalText = document.getElementById("modal-text");
+      const gameOverText = document.getElementById("game-over-text");
+      
+      // אלמנטים לאווטאר
+      const leftEye = document.getElementById("left-eye");
+      const rightEye = document.getElementById("right-eye");
+      const mouth = document.getElementById("mouth");
+      
+      // אתחול המשחק
+      function initGame() {
+          gameState.suspicionLevel = 20;
+          gameState.currentLevel = 1;
+          gameState.coversBlown = 0;
+          gameState.agentLevel = "מתחיל";
+          loadLevel();
+          updateUI();
+      }
+      
+      // טעינת הרמה הנוכחית
+      function loadLevel() {
+          const level = gameLevels[gameState.currentLevel - 1];
+          currentLevelIndicator.textContent = level.title;
+          
+          // הגדרת טקסט התרחיש
+          const scenarioP = document.createElement("p");
+          scenarioP.textContent = level.scenario;
+          scenarioText.innerHTML = "";
+          scenarioText.appendChild(scenarioP);
+          
+          // יצירת כפתורי אפשרויות
+          optionsContainer.innerHTML = "";
+          level.options.forEach((option, index) => {
+              const button = document.createElement("button");
+              button.className = "option-btn";
+              button.textContent = option.text;
+              button.onclick = () => selectOption(index);
+              optionsContainer.appendChild(button);
+          });
+          
+          // הסתרת המשוב
+          feedbackContainer.style.display = "none";
+      }
+      
+      // בחירת אפשרות
+      function selectOption(index) {
+          const level = gameLevels[gameState.currentLevel - 1];
+          const option = level.options[index];
+          
+          // עדכון רמת החשד
+          gameState.suspicionLevel += option.suspicionChange;
+          if (gameState.suspicionLevel < 0) gameState.suspicionLevel = 0;
+          if (gameState.suspicionLevel > 100) gameState.suspicionLevel = 100;
+          
+          // הצגת משוב
+          feedbackText.textContent = option.result;
+          tipText.textContent = option.tip;
+          feedbackContainer.className = "feedback " + (option.success ? "success" : "failure");
+          feedbackContainer.style.display = "block";
+          
+          // השבתת כפתורי האפשרויות
+          const buttons = optionsContainer.querySelectorAll(".option-btn");
+          buttons.forEach(btn => {
+              btn.disabled = true;
+              btn.style.opacity = 0.6;
+          });
+          
+          // עדכון ממשק המשתמש
+          updateUI();
+          
+          // עדכון הבעות האווטאר לפי הצלחה/כישלון
+          updateAvatar(option.success);
+          
+          // בדיקת מצב המשחק לאחר עיכוב
+          setTimeout(() => checkGameStatus(), 2000);
+      }
+      
+      // עדכון הבעות האווטאר
+      function updateAvatar(success) {
+          if (success) {
+              leftEye.style.transform = "scale(1)";
+              rightEye.style.transform = "scale(1)";
+              mouth.style.height = "10px";
+              mouth.style.borderRadius = "5px 5px 10px 10px";
+          } else {
+              leftEye.style.transform = "scale(1.2)";
+              rightEye.style.transform = "scale(1.2)";
+              mouth.style.height = "5px";
+              mouth.style.borderRadius = "5px";
+          }
+      }
+      
+      // איפוס האווטאר למצב נייטרלי
+      function resetAvatar() {
+          leftEye.style.transform = "scale(1)";
+          rightEye.style.transform = "scale(1)";
+          mouth.style.height = "10px";
+          mouth.style.borderRadius = "5px";
+      }
+      
+      // עדכון ממשק המשתמש
+      function updateUI() {
+          suspicionFill.style.width = gameState.suspicionLevel + "%";
+          suspicionLabel.textContent = gameState.suspicionLevel + "%";
+          
+          // עדכון סטטוס
+          coversBlown.textContent = gameState.coversBlown;
+          
+          // עדכון רמת הסוכן לפי התקדמות
+          if (gameState.currentLevel === 1) {
+              gameState.agentLevel = "מתחיל";
+          } else if (gameState.currentLevel === 2) {
+              gameState.agentLevel = "סוכן בשטח";
+          } else if (gameState.currentLevel === 3) {
+              gameState.agentLevel = "מרגל עליון";
+          } else if (gameState.currentLevel === 4) {
+              gameState.agentLevel = "סוכן מסתורי";
+          } else {
+              gameState.agentLevel = "אגדה חשאית";
+          }
+          
+          agentLevelElem.textContent = gameState.agentLevel;
+      }
+      
+      // בדיקת מצב המשחק
+      function checkGameStatus() {
+          if (gameState.suspicionLevel >= 100) {
+              // סיום המשחק - חשד מוגבר
+              gameState.coversBlown++;
+              coversBlown.textContent = gameState.coversBlown;
+              gameOverText.textContent = `הכיסוי שלך נחשף ${gameState.coversBlown} פעם. אולי הגיע הזמן לשקול מחדש את הגישה שלך?`;
+              gameOverModal.style.display = "flex";
+          } else if (gameState.suspicionLevel <= 10) {
+              // סיום רמה - חשד נמוך מאוד
+              if (gameState.currentLevel === gameState.maxLevel) {
+                  // סיום המשחק
+                  gameCompleteModal.style.display = "flex";
+              } else {
+                  // מעבר לרמה הבאה
+                  modalTitle.textContent = "הרמה הושלמה!";
+                  modalText.textContent = `כל הכבוד, סוכן! רמת החשד שלך היא רק ${gameState.suspicionLevel}%. נראה שאתה מוכן לאתגר הבא.`;
+                  levelCompleteModal.style.display = "flex";
+              }
+          } else {
+              // סיום רמה - התקדמות נורמלית
+              if (gameState.currentLevel === gameState.maxLevel) {
+                  // סיום המשחק
+                  gameCompleteModal.style.display = "flex";
+              } else {
+                  modalTitle.textContent = "הרמה הושלמה";
+                  modalText.textContent = `המשימה הסתיימה עם רמת חשד של ${gameState.suspicionLevel}%. לא מושלם, אבל הצלחת לשמור על הכיסוי (לפחות באופן חלקי).`;
+                  levelCompleteModal.style.display = "flex";
+              }
+          }
+      }
+      
+      // מאזינים לאירועים
+      nextLevelBtn.addEventListener("click", () => {
+          levelCompleteModal.style.display = "none";
+          gameState.currentLevel++;
+          resetAvatar();
+          loadLevel();
+      });
+      
+      restartBtn.addEventListener("click", () => {
+          gameOverModal.style.display = "none";
+          gameState.suspicionLevel = 20;
+          resetAvatar();
+          loadLevel();
+      });
+      
+      restartGameBtn.addEventListener("click", () => {
+          gameCompleteModal.style.display = "none";
+          initGame();
+      });
+      
+      // התחלת המשחק
+      initGame();
+  </script>
+</body>
+</html>
